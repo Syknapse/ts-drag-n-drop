@@ -1,3 +1,3 @@
-# TS Drag'nDrop project
+# TS Drag'n'Drop project
 
-A project to pra tice TypeScript
+A project to practice TypeScript
