@@ -1,3 +1,42 @@
+// Project State class /* A Redux type implementation */
+class ProjectState {
+  private listeners: any[] = []
+  private projects: any[] = []
+  private static instance: ProjectState // To implement a singleton and make sure there is only ever one instance of state
+
+  private constructor() {}
+
+  // singleton
+  static getInstance() {
+    if (this.instance) {
+      return this.instance
+    }
+    this.instance = new ProjectState()
+    return this.instance
+  }
+
+  // Adds a supplied callback function to the list of functions listening
+  addListener(listenerFn: Function) {
+    this.listeners.push(listenerFn)
+  }
+
+  addProject(title: string, description: string, people: number) {
+    const newProject = {
+      id: Math.random().toString(),
+      title,
+      description,
+      people,
+    }
+    this.projects.push(newProject)
+    // execute each of the functions stored in listeners list
+    for (const listenerFn of this.listeners) {
+      listenerFn(this.projects.slice())
+    }
+  }
+}
+
+const state = ProjectState.getInstance()
+
 // Validation
 interface Validatable {
   value: string | number
@@ -43,7 +82,52 @@ function autoBind(_: any, _2: string, descriptor: PropertyDescriptor) {
   return adjustedDescriptor
 }
 
-//ProjectINput Class
+// ProjectList Class
+class ProjectList {
+  templateElement: HTMLTemplateElement
+  hostElement: HTMLDivElement
+  element: HTMLElement
+  assignedProjects: any[]
+
+  constructor(private type: 'active' | 'finished') {
+    this.templateElement = document.getElementById('project-list')! as HTMLTemplateElement // or <HTMLTemplateElement>document.getElementById('project-input')!
+    this.hostElement = document.getElementById('app')! as HTMLDivElement
+    this.assignedProjects = []
+
+    const importedNode = document.importNode(this.templateElement.content, true)
+    this.element = importedNode.firstElementChild as HTMLElement
+    this.element.id = `${this.type}-projects`
+
+    state.addListener((projects: any[]) => {
+      this.assignedProjects = projects
+      this.renderProjects()
+    })
+
+    this.attach()
+    this.renderContent()
+  }
+
+  private renderProjects() {
+    const listEl = document.getElementById(`${this.type}-projects-lists`)! as HTMLUListElement
+    for (const project of this.assignedProjects) {
+      const item = document.createElement('li')
+      item.textContent = project.title
+      listEl.appendChild(item)
+    }
+  }
+
+  private renderContent() {
+    const listId = `${this.type}-projects-lists`
+    this.element.querySelector('ul')!.id = listId
+    this.element.querySelector('h2')!.textContent = `${this.type.toUpperCase()} PROJECTS`
+  }
+
+  private attach() {
+    this.hostElement.insertAdjacentElement('beforeend', this.element)
+  }
+}
+
+// ProjectInput Class
 class ProjectInput {
   templateElement: HTMLTemplateElement
   hostElement: HTMLDivElement
@@ -107,7 +191,7 @@ class ProjectInput {
     const userInput = this.handleUserInput()
     if (Array.isArray(userInput)) {
       const [title, description, people] = userInput
-      console.log('userINput: ', title, description, people)
+      state.addProject(title, description, people)
       this.clearInputs()
     }
   }
@@ -121,4 +205,6 @@ class ProjectInput {
   }
 }
 
-const prjInput = new ProjectInput()
+const projectInput = new ProjectInput()
+const activeProjectList = new ProjectList('active')
+const finishedProjectList = new ProjectList('finished')
