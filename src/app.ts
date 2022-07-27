@@ -1,3 +1,49 @@
+// Validation
+interface Validatable {
+  value: string | number;
+  isRequired?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+}
+
+function validate(validatableInput: Validatable) {
+  let isValid = true;
+
+  if (validatableInput.isRequired) {
+    isValid = isValid && validatableInput.value.toString().trim().length !== 0;
+  }
+  if (
+    validatableInput.minLength != null &&
+    typeof validatableInput.value === "string"
+  ) {
+    isValid =
+      isValid && validatableInput.value.length >= validatableInput.minLength;
+  }
+  if (
+    validatableInput.maxLength != null &&
+    typeof validatableInput.value === "string"
+  ) {
+    isValid =
+      isValid && validatableInput.value.length <= validatableInput.maxLength;
+  }
+  if (
+    validatableInput.min != null &&
+    typeof validatableInput.value === "number"
+  ) {
+    isValid = isValid && validatableInput.value >= validatableInput.min;
+  }
+  if (
+    validatableInput.max != null &&
+    typeof validatableInput.value === "number"
+  ) {
+    isValid = isValid && validatableInput.value <= validatableInput.max;
+  }
+
+  return isValid;
+}
+
 // AutoBind decorator
 function autoBind(_: any, _2: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
@@ -50,12 +96,30 @@ class ProjectInput {
     const description = this.descriptionInputElement.value;
     const people = this.peopleInputElement.value;
 
+    const titleValidatable: Validatable = {
+      value: title,
+      isRequired: true,
+    };
+    const descriptionValidatable: Validatable = {
+      value: description,
+      isRequired: true,
+      minLength: 5,
+    };
+    const peopleValidatable: Validatable = {
+      value: parseFloat(people),
+      isRequired: true,
+      min: 1,
+      max: 5,
+    };
+
     if (
-      title.trim().length === 0 ||
-      description.trim().length === 0 ||
-      people.trim().length === 0
+      !validate(titleValidatable) ||
+      !validate(descriptionValidatable) ||
+      !validate(peopleValidatable)
     ) {
-      alert("Invalid input");
+      alert(
+        `Invalid input=> {title: ${title}, description: ${description}, people: ${people}}`
+      );
       return;
     } else {
       return [title, description, parseFloat(people)];
