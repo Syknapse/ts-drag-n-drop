@@ -1,3 +1,15 @@
+// Drag and drop Interfaces
+interface Draggable {
+  dragStartHandler(event: DragEvent): void
+  dragEndHandler(event: DragEvent): void
+}
+
+interface DragTarget {
+  dragOverHandler(event: DragEvent): void
+  dropHandler(event: DragEvent): void
+  dragLeaveHandler(event: DragEvent): void
+}
+
 // Project type
 enum ProjectStatus {
   Active,
@@ -46,6 +58,18 @@ class ProjectState extends State<Project> {
   addProject(title: string, description: string, people: number) {
     const newProject = new Project(Math.random().toString(), title, description, people, ProjectStatus.Active)
     this.projects.push(newProject)
+    this.updateListeners()
+  }
+
+  changeStatus(projectId: string, newStatus: ProjectStatus) {
+    const project = this.projects.find(project => project.id === projectId)
+    if (project && project.status !== newStatus) {
+      project.status = newStatus
+      this.updateListeners()
+    }
+  }
+
+  private updateListeners() {
     // execute each of the functions stored in listeners list
     for (const listenerFn of this.listeners) {
       listenerFn(this.projects.slice())
@@ -127,7 +151,7 @@ abstract class Base<T extends HTMLElement, U extends HTMLElement> {
 }
 
 // ProjectItem class
-class ProjectItem extends Base<HTMLUListElement, HTMLLIElement> {
+class ProjectItem extends Base<HTMLUListElement, HTMLLIElement> implements Draggable {
   private project: Project
 
   get persons() {
@@ -146,7 +170,19 @@ class ProjectItem extends Base<HTMLUListElement, HTMLLIElement> {
     this.renderContent()
   }
 
-  configure() {}
+  @autoBind
+  dragStartHandler(event: DragEvent) {
+    event.dataTransfer!.setData('text/plain', this.project.id)
+    event.dataTransfer!.effectAllowed = 'move'
+  }
+
+  dragEndHandler(_: DragEvent) {}
+
+  configure() {
+    this.element.addEventListener('dragstart', this.dragStartHandler)
+    this.element.addEventListener('dragend', this.dragEndHandler)
+  }
+
   renderContent() {
     this.element.querySelector('h2')!.textContent = this.project.title
     this.element.querySelector('h3')!.textContent = this.persons
@@ -155,7 +191,7 @@ class ProjectItem extends Base<HTMLUListElement, HTMLLIElement> {
 }
 
 // ProjectList Class
-class ProjectList extends Base<HTMLDivElement, HTMLElement> {
+class ProjectList extends Base<HTMLDivElement, HTMLElement> implements DragTarget {
   assignedProjects: Project[]
 
   constructor(private type: 'active' | 'finished') {
@@ -166,7 +202,33 @@ class ProjectList extends Base<HTMLDivElement, HTMLElement> {
     this.renderContent()
   }
 
+  @autoBind
+  dragOverHandler(event: DragEvent) {
+    // Check that the dragged item is of the type we are expecting
+    if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') {
+      // The default is to not allow a drop. We need this for the 'drop' event to fire
+      event.preventDefault()
+      const listEl = this.element.querySelector('ul')!
+      listEl.classList.add('droppable')
+    }
+  }
+
+  @autoBind
+  dropHandler(event: DragEvent) {
+    const projectId = event.dataTransfer!.getData('text/plain')
+    projectState.changeStatus(projectId, this.type === 'active' ? ProjectStatus.Active : ProjectStatus.Finished)
+  }
+
+  @autoBind
+  dragLeaveHandler(_: DragEvent) {
+    const listEl = this.element.querySelector('ul')!
+    listEl.classList.remove('droppable')
+  }
+
   configure() {
+    this.element.addEventListener('dragover', this.dragOverHandler)
+    this.element.addEventListener('drop', this.dropHandler)
+    this.element.addEventListener('dragleave', this.dragLeaveHandler)
     projectState.addListener((projects: Project[]) => {
       const filteredProjects = projects.filter(project => {
         if (this.type === 'active') {
