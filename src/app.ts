@@ -126,6 +126,26 @@ abstract class Base<T extends HTMLElement, U extends HTMLElement> {
   abstract renderContent(): void
 }
 
+// ProjectItem class
+class ProjectItem extends Base<HTMLUListElement, HTMLLIElement> {
+  private project: Project
+
+  constructor(hostId: string, project: Project) {
+    super('single-project', hostId, false, project.id)
+    this.project = project
+
+    this.configure()
+    this.renderContent()
+  }
+
+  configure() {}
+  renderContent() {
+    this.element.querySelector('h2')!.textContent = this.project.title
+    this.element.querySelector('h3')!.textContent = this.project.people.toString()
+    this.element.querySelector('p')!.textContent = this.project.description
+  }
+}
+
 // ProjectList Class
 class ProjectList extends Base<HTMLDivElement, HTMLElement> {
   assignedProjects: Project[]
@@ -161,9 +181,7 @@ class ProjectList extends Base<HTMLDivElement, HTMLElement> {
     const listEl = document.getElementById(`${this.type}-projects-lists`)! as HTMLUListElement
     listEl.innerHTML = ''
     for (const project of this.assignedProjects) {
-      const item = document.createElement('li')
-      item.textContent = project.title
-      listEl.appendChild(item)
+      new ProjectItem(this.element.querySelector('ul')!.id, project)
     }
   }
 }
