@@ -12,7 +12,7 @@
     "typescript",
     "course"
   ],
-  "author": "Maximilian Schwarzmüller",
+  "author": "Syk Houdeib",
   "license": "ISC",
   "devDependencies": {
     "lite-server": "^2.5.4"
