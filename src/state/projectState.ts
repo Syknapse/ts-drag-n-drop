@@ -41,6 +41,12 @@ export class ProjectState extends State<Project> {
     this.updateListeners()
   }
 
+  deleteProject(id: string) {
+    this.projects = this.projects.filter(project => project.id !== id)
+    localStorage.setItem('projects', JSON.stringify(this.projects))
+    this.updateListeners()
+  }
+
   changeStatus(projectId: string, newStatus: ProjectStatus) {
     const project = this.projects.find(project => project.id === projectId)
     if (project && project.status !== newStatus) {

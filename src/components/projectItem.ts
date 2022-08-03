@@ -1,3 +1,4 @@
+import { projectState } from '../state/projectState'
 import { autoBind } from '../decorators/autobind'
 import { Draggable } from '../models/dragDrop'
 import { Project } from '../models/project'
@@ -33,6 +34,7 @@ export class ProjectItem extends Base<HTMLUListElement, HTMLLIElement> implement
   configure() {
     this.element.addEventListener('dragstart', this.dragStartHandler)
     this.element.addEventListener('dragend', this.dragEndHandler)
+    this.element.querySelector('button')!.addEventListener('click', () => projectState.deleteProject(this.element.id))
   }
 
   renderContent() {
