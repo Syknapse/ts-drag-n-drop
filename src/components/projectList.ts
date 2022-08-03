@@ -43,22 +43,27 @@ export class ProjectList extends Base<HTMLDivElement, HTMLElement> implements Dr
     this.element.addEventListener('dragover', this.dragOverHandler)
     this.element.addEventListener('drop', this.dropHandler)
     this.element.addEventListener('dragleave', this.dragLeaveHandler)
-    projectState.addListener((projects: Project[]) => {
-      const filteredProjects = projects.filter(project => {
-        if (this.type === 'active') {
-          return project.status === ProjectStatus.Active
-        }
-        return project.status === ProjectStatus.Finished
-      })
-      this.assignedProjects = filteredProjects
-      this.renderProjects()
+
+    projectState.addListener(this.setProjects)
+  }
+
+  @autoBind
+  setProjects(projects: Project[]) {
+    const filteredProjects = projects.filter(project => {
+      if (this.type === 'active') {
+        return project.status === ProjectStatus.Active
+      }
+      return project.status === ProjectStatus.Finished
     })
+    this.assignedProjects = filteredProjects
+    this.renderProjects()
   }
 
   renderContent() {
     const listId = `${this.type}-projects-lists`
     this.element.querySelector('ul')!.id = listId
     this.element.querySelector('h2')!.textContent = `${this.type.toUpperCase()} PROJECTS`
+    this.setProjects(projectState.currentProjects)
   }
 
   private renderProjects() {

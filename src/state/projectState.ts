@@ -18,6 +18,7 @@ export class ProjectState extends State<Project> {
 
   private constructor() {
     super()
+    this.projects = JSON.parse(localStorage.getItem('projects') || '[]')
   }
 
   // singleton
@@ -29,9 +30,14 @@ export class ProjectState extends State<Project> {
     return this.instance
   }
 
+  get currentProjects() {
+    return this.projects
+  }
+
   addProject(title: string, description: string, people: number) {
     const newProject = new Project(Math.random().toString(), title, description, people, ProjectStatus.Active)
     this.projects.push(newProject)
+    localStorage.setItem('projects', JSON.stringify(this.projects))
     this.updateListeners()
   }
 
@@ -39,6 +45,7 @@ export class ProjectState extends State<Project> {
     const project = this.projects.find(project => project.id === projectId)
     if (project && project.status !== newStatus) {
       project.status = newStatus
+      localStorage.setItem('projects', JSON.stringify(this.projects))
       this.updateListeners()
     }
   }
